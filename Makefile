@@ -1,3 +1,3 @@
 run:
-	@ go build -o main
-	@ ./main
+	@ go build -o bin/main
+	@ ./bin/main
