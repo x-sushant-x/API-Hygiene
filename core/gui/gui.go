@@ -30,8 +30,9 @@ func buildBodyEntry() *widget.Entry {
 	return bodyEntry
 }
 
-func buildRightPanel() *fyne.Container {
+func buildRightPanel() (*fyne.Container, *widget.Label) {
 	statusCodeCheck := widget.NewLabel("Status Code Check")
+
 	statusCodeCheckResponse := widget.NewLabel("Pending...")
 
 	checks := container.NewVBox(
@@ -42,7 +43,7 @@ func buildRightPanel() *fyne.Container {
 		),
 	)
 
-	return container.NewStack(checks)
+	return container.NewStack(checks), statusCodeCheckResponse
 }
 
 func buildMainContent() *container.Split {
@@ -50,7 +51,7 @@ func buildMainContent() *container.Split {
 	endpointEntry := buildEndpointEntry()
 	bodyEntry := buildBodyEntry()
 
-	rightPanel := buildRightPanel()
+	rightPanel, statusCodeLabel := buildRightPanel()
 
 	submitBtn := widget.NewButton("Run Tests", func() {
 		method := methodSelect.Selected
@@ -62,14 +63,28 @@ func buildMainContent() *container.Split {
 		var resultText string
 		if report.ErrorMessage != "" {
 			resultText = fmt.Sprintf("Error: %s", report.ErrorMessage)
-		} else {
-			resultText = fmt.Sprintf("Status Code: %v", report.StatusCode)
-		}
 
-		rightPanel.Objects = []fyne.CanvasObject{
-			widget.NewLabel(resultText),
+			rightPanel.Objects = []fyne.CanvasObject{
+				widget.NewLabel(resultText),
+			}
+			rightPanel.Refresh()
+
+		} else {
+			if report.StatusCode.IsValidCode {
+				statusCodeLabel.SetText("Valid")
+				statusCodeLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+				statusCodeLabel.Refresh()
+				statusCodeLabel.Alignment = fyne.TextAlignLeading
+			} else {
+				statusCodeLabel.SetText("Invalid")
+				statusCodeLabel.TextStyle = fyne.TextStyle{Bold: true}
+				statusCodeLabel.Refresh()
+				statusCodeLabel.Alignment = fyne.TextAlignLeading
+			}
+
+			statusCodeLabel.Refresh()
 		}
-		rightPanel.Refresh()
 	})
 
 	leftPanel := container.NewPadded(container.NewVBox(
