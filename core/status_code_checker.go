@@ -6,11 +6,11 @@ import (
 )
 
 var returnCodesList = map[string][]int{
-	"GET":    {200, 304, 404, 500},
-	"POST":   {201, 400, 409, 500},
-	"PUT":    {200, 204, 400, 404, 500},
-	"DELETE": {200, 204, 404, 500},
-	"PATCH":  {200, 204, 400, 404, 500},
+	"GET":    {200},
+	"POST":   {201},
+	"PUT":    {200},
+	"DELETE": {200},
+	"PATCH":  {200},
 }
 
 func CheckStatusCode(requestType string, resp http.Response) (StatusCode, error) {
@@ -23,7 +23,6 @@ func CheckStatusCode(requestType string, resp http.Response) (StatusCode, error)
 	statusCode := StatusCode{}
 
 	statusCode.Got = resp.StatusCode
-	statusCode.ValidCodes = validCodes
 
 	for _, validCode := range validCodes {
 		if statusCode.Got == validCode {

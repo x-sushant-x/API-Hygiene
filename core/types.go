@@ -5,8 +5,6 @@ type HygieneReport struct {
 }
 
 type StatusCode struct {
-	ValidCodes  []int
 	Got         int
 	IsValidCode bool
-	IsErrorCode bool
 }
