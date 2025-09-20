@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"net/http"
 )
 
@@ -13,12 +12,8 @@ var returnCodesList = map[string][]int{
 	"PATCH":  {200},
 }
 
-func CheckStatusCode(requestType string, resp http.Response) (StatusCode, error) {
-	validCodes, found := returnCodesList[requestType]
-
-	if !found {
-		return StatusCode{}, errors.New("unknown or un-supported request type")
-	}
+func checkStatusCode(requestType string, resp *http.Response) StatusCode {
+	validCodes, _ := returnCodesList[requestType]
 
 	statusCode := StatusCode{}
 
@@ -30,5 +25,5 @@ func CheckStatusCode(requestType string, resp http.Response) (StatusCode, error)
 		}
 	}
 
-	return statusCode, nil
+	return statusCode
 }

@@ -1,7 +1,12 @@
 package core
 
+import "time"
+
 type HygieneReport struct {
-	StatusCode StatusCode
+	ResponseBody string
+	ResponseTime time.Duration
+	ErrorMessage string
+	StatusCode   StatusCode
 }
 
 type StatusCode struct {

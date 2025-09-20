@@ -1,11 +1,14 @@
 package gui
 
 import (
+	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/x-sushant-x/API-Hygiene/core"
 )
 
 func buildMethodSelector() *widget.Select {
@@ -27,19 +30,34 @@ func buildBodyEntry() *widget.Entry {
 	return bodyEntry
 }
 
-func buildSubmitButton() *widget.Button {
-	return widget.NewButton("Run Tests", func() {
-		// TODO: Add request execution logic here
-	})
-}
-
-func buildLeftPanel() *fyne.Container {
+func buildMainContent() *container.Split {
 	methodSelect := buildMethodSelector()
 	endpointEntry := buildEndpointEntry()
 	bodyEntry := buildBodyEntry()
-	submitBtn := buildSubmitButton()
 
-	return container.NewPadded(container.NewVBox(
+	rightPanel := container.NewStack(widget.NewLabel("Results will appear here..."))
+
+	submitBtn := widget.NewButton("Run Tests", func() {
+		method := methodSelect.Selected
+		endpoint := endpointEntry.Text
+
+		runner := core.NewHygieneRunner(endpoint, method)
+		report := runner.CheckHygiene()
+
+		var resultText string
+		if report.ErrorMessage != "" {
+			resultText = fmt.Sprintf("Error: %s", report.ErrorMessage)
+		} else {
+			resultText = fmt.Sprintf("Status Code: %v", report.StatusCode)
+		}
+
+		rightPanel.Objects = []fyne.CanvasObject{
+			widget.NewLabel(resultText),
+		}
+		rightPanel.Refresh()
+	})
+
+	leftPanel := container.NewPadded(container.NewVBox(
 		widget.NewLabel("Method:"),
 		methodSelect,
 		widget.NewLabel("Endpoint:"),
@@ -49,11 +67,6 @@ func buildLeftPanel() *fyne.Container {
 		layout.NewSpacer(),
 		submitBtn,
 	))
-}
-
-func buildMainContent() *container.Split {
-	leftPanel := buildLeftPanel()
-	rightPanel := container.NewStack()
 	mainContent := container.NewHSplit(leftPanel, rightPanel)
 	mainContent.Offset = 0.35
 	return mainContent
