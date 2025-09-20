@@ -11,4 +11,5 @@ It allows you to select the request method, enter an API endpoint, and run prede
 - Enter API endpoint and optional request body (for POST/PUT).
 - Run predefined hygiene tests (currently: Status Code Check).
 
-### Screenshots
+### Screenshot
+![API Hygiene GUI](https://raw.githubusercontent.com/x-sushant-x/API-Hygiene/refs/heads/main/Demo%20Screenshot.png)
