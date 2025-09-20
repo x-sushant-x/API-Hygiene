@@ -30,12 +30,27 @@ func buildBodyEntry() *widget.Entry {
 	return bodyEntry
 }
 
+func buildRightPanel() *fyne.Container {
+	statusCodeCheck := widget.NewLabel("Status Code Check")
+	statusCodeCheckResponse := widget.NewLabel("Pending...")
+
+	checks := container.NewVBox(
+		widget.NewLabel("Test Results:"),
+		container.NewHBox(
+			statusCodeCheck,
+			statusCodeCheckResponse,
+		),
+	)
+
+	return container.NewStack(checks)
+}
+
 func buildMainContent() *container.Split {
 	methodSelect := buildMethodSelector()
 	endpointEntry := buildEndpointEntry()
 	bodyEntry := buildBodyEntry()
 
-	rightPanel := container.NewStack(widget.NewLabel("Results will appear here..."))
+	rightPanel := buildRightPanel()
 
 	submitBtn := widget.NewButton("Run Tests", func() {
 		method := methodSelect.Selected
