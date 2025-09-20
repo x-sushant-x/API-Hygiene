@@ -1,3 +1,9 @@
+/*
+	IMPORTANT
+
+	Code in this file is complete SHIT. Must refactor it later.
+*/
+
 package gui
 
 import (
