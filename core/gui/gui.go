@@ -1,9 +1,3 @@
-/*
-	IMPORTANT
-
-	Code in this file is complete SHIT. Must refactor it later.
-*/
-
 package gui
 
 import (
@@ -19,45 +13,79 @@ import (
 
 func buildMethodSelector() *widget.Select {
 	methods := []string{"GET", "POST", "PUT", "DELETE", "PATCH"}
-	methodSelect := widget.NewSelect(methods, func(value string) {})
-	methodSelect.SetSelected("GET")
-	return methodSelect
+	selectBox := widget.NewSelect(methods, nil)
+	selectBox.SetSelected("GET")
+	return selectBox
 }
 
 func buildEndpointEntry() *widget.Entry {
-	endpointEntry := widget.NewEntry()
-	endpointEntry.SetPlaceHolder("Enter API endpoint...")
-	return endpointEntry
+	entry := widget.NewEntry()
+	entry.SetPlaceHolder("Enter API endpoint...")
+	return entry
 }
 
 func buildBodyEntry() *widget.Entry {
-	bodyEntry := widget.NewMultiLineEntry()
-	bodyEntry.SetPlaceHolder("Enter request body (for POST/PUT)...")
-	return bodyEntry
+	entry := widget.NewMultiLineEntry()
+	entry.SetPlaceHolder("Enter request body (for POST/PUT)...")
+	return entry
 }
 
-func buildRightPanel() (*fyne.Container, *widget.Label) {
-	statusCodeCheck := widget.NewLabel("Status Code Check")
+type RightPanel struct {
+	Container *fyne.Container
+	labels    map[string]*widget.Label
+}
 
-	statusCodeCheckResponse := widget.NewLabel("Pending...")
+func newRightPanel() *RightPanel {
+	rp := &RightPanel{
+		labels: make(map[string]*widget.Label),
+	}
 
-	checks := container.NewVBox(
+	rp.addCheck(API_VERSIONING)
+	rp.addCheck(ENDPOINT_NAMING_CONVENTION)
+	rp.addCheck(AUTHORIZATION_CHECK)
+	rp.addCheck(API_VERSIONING)
+	rp.addCheck(IS_HTTPS_CONFIGURED)
+	rp.addCheck(PAGINATION)
+	rp.addCheck(REQUEST_CONSISTENCY)
+	rp.addCheck(RESPONSE_CONSISTENCY)
+
+	rp.Container = container.NewVBox(
 		widget.NewLabel("Test Results:"),
-		container.NewHBox(
-			statusCodeCheck,
-			statusCodeCheckResponse,
-		),
 	)
 
-	return container.NewStack(checks), statusCodeCheckResponse
+	for name, label := range rp.labels {
+		rp.Container.Add(container.NewHBox(
+			widget.NewLabel(name+":"),
+			layout.NewSpacer(),
+			label,
+		))
+	}
+
+	return rp
+}
+
+func (rp *RightPanel) addCheck(name string) {
+	rp.labels[name] = widget.NewLabel("Pending...")
+}
+
+func (rp *RightPanel) updateCheck(name, value string, isValid bool) {
+	if label, ok := rp.labels[name]; ok {
+		label.SetText(value)
+		label.TextStyle = fyne.TextStyle{Bold: true}
+		if isValid {
+			label.Alignment = fyne.TextAlignLeading
+		} else {
+			label.Alignment = fyne.TextAlignLeading
+		}
+		label.Refresh()
+	}
 }
 
 func buildMainContent() *container.Split {
 	methodSelect := buildMethodSelector()
 	endpointEntry := buildEndpointEntry()
 	bodyEntry := buildBodyEntry()
-
-	rightPanel, statusCodeLabel := buildRightPanel()
+	rightPanel := newRightPanel()
 
 	submitBtn := widget.NewButton("Run Tests", func() {
 		method := methodSelect.Selected
@@ -66,30 +94,15 @@ func buildMainContent() *container.Split {
 		runner := core.NewHygieneRunner(endpoint, method)
 		report := runner.CheckHygiene()
 
-		var resultText string
 		if report.ErrorMessage != "" {
-			resultText = fmt.Sprintf("Error: %s", report.ErrorMessage)
+			rightPanel.updateCheck("Status Code", fmt.Sprintf("Error: %s", report.ErrorMessage), false)
+			return
+		}
 
-			rightPanel.Objects = []fyne.CanvasObject{
-				widget.NewLabel(resultText),
-			}
-			rightPanel.Refresh()
-
+		if report.StatusCode.IsValidCode {
+			rightPanel.updateCheck("Status Code", "Valid", true)
 		} else {
-			if report.StatusCode.IsValidCode {
-				statusCodeLabel.SetText("Valid")
-				statusCodeLabel.TextStyle = fyne.TextStyle{Bold: true}
-
-				statusCodeLabel.Refresh()
-				statusCodeLabel.Alignment = fyne.TextAlignLeading
-			} else {
-				statusCodeLabel.SetText("Invalid")
-				statusCodeLabel.TextStyle = fyne.TextStyle{Bold: true}
-				statusCodeLabel.Refresh()
-				statusCodeLabel.Alignment = fyne.TextAlignLeading
-			}
-
-			statusCodeLabel.Refresh()
+			rightPanel.updateCheck("Status Code", "Invalid", false)
 		}
 	})
 
@@ -103,7 +116,8 @@ func buildMainContent() *container.Split {
 		layout.NewSpacer(),
 		submitBtn,
 	))
-	mainContent := container.NewHSplit(leftPanel, rightPanel)
+
+	mainContent := container.NewHSplit(leftPanel, rightPanel.Container)
 	mainContent.Offset = 0.35
 	return mainContent
 }
