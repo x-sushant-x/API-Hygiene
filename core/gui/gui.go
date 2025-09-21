@@ -7,7 +7,10 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/x-sushant-x/API-Hygiene/core"
 )
@@ -91,7 +94,7 @@ func (rp *RightPanel) updateCheck(name, value string, isValid bool) {
 	}
 }
 
-func buildMainContent(requestMethod string) *container.Split {
+func buildMainContent(requestMethod string, rootWindow fyne.Window) *container.Split {
 	bodyEntry := buildBodyEntry()
 
 	methodSelect := buildMethodSelector(bodyEntry)
@@ -122,6 +125,27 @@ func buildMainContent(requestMethod string) *container.Split {
 		}
 	})
 
+	uploadSpecificationFile := widget.NewButtonWithIcon("Upload OpenAPI or Swagger", theme.UploadIcon(), func() {
+
+		fileDialog := dialog.NewFileOpen(
+			func(reader fyne.URIReadCloser, err error) {
+				if err != nil {
+					fmt.Println("Error:", err)
+					return
+				}
+				if reader == nil {
+					fmt.Println("No file selected")
+					return
+				}
+				fmt.Println("Selected file:", reader.URI().Path())
+				reader.Close()
+			}, rootWindow)
+
+		fileDialog.SetFilter(storage.NewExtensionFileFilter([]string{".yaml", ".yml", ".json"}))
+
+		fileDialog.Show()
+	})
+
 	leftPanel := container.NewPadded(container.NewVBox(
 		widget.NewLabel("Method:"),
 		methodSelect,
@@ -131,6 +155,7 @@ func buildMainContent(requestMethod string) *container.Split {
 		bodyEntry,
 		layout.NewSpacer(),
 		submitBtn,
+		uploadSpecificationFile,
 	))
 
 	mainContent := container.NewHSplit(leftPanel, rightPanel.Container)
@@ -139,10 +164,10 @@ func buildMainContent(requestMethod string) *container.Split {
 }
 
 func StartApplication() {
-	myApp := app.New()
+	myApp := app.NewWithID("com.sushant.api_hygiene")
 	myWindow := myApp.NewWindow("API Hygiene")
 
-	mainContent := buildMainContent(selectedRequestMethod)
+	mainContent := buildMainContent(selectedRequestMethod, myWindow)
 	myWindow.SetContent(mainContent)
 	myWindow.Resize(fyne.NewSize(1000, 600))
 	myWindow.ShowAndRun()
