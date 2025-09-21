@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"net/http"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -11,9 +12,17 @@ import (
 	"github.com/x-sushant-x/API-Hygiene/core"
 )
 
-func buildMethodSelector() *widget.Select {
+var selectedRequestMethod = "GET"
+
+func buildMethodSelector(bodyEntry *widget.Entry) *widget.Select {
 	methods := []string{"GET", "POST", "PUT", "DELETE", "PATCH"}
-	selectBox := widget.NewSelect(methods, nil)
+	selectBox := widget.NewSelect(methods, func(s string) {
+		if s == http.MethodPost || s == http.MethodPut || s == http.MethodPatch {
+			bodyEntry.Enable()
+		} else {
+			bodyEntry.Disable()
+		}
+	})
 	selectBox.SetSelected("GET")
 	return selectBox
 }
@@ -40,6 +49,7 @@ func newRightPanel() *RightPanel {
 		labels: make(map[string]*widget.Label),
 	}
 
+	rp.addCheck(STATUS_CODE_CHECK)
 	rp.addCheck(API_VERSIONING)
 	rp.addCheck(ENDPOINT_NAMING_CONVENTION)
 	rp.addCheck(AUTHORIZATION_CHECK)
@@ -81,10 +91,16 @@ func (rp *RightPanel) updateCheck(name, value string, isValid bool) {
 	}
 }
 
-func buildMainContent() *container.Split {
-	methodSelect := buildMethodSelector()
-	endpointEntry := buildEndpointEntry()
+func buildMainContent(requestMethod string) *container.Split {
 	bodyEntry := buildBodyEntry()
+
+	methodSelect := buildMethodSelector(bodyEntry)
+	endpointEntry := buildEndpointEntry()
+
+	if requestMethod != http.MethodPost && requestMethod != http.MethodPut && requestMethod != http.MethodPatch {
+		bodyEntry.Disable()
+	}
+
 	rightPanel := newRightPanel()
 
 	submitBtn := widget.NewButton("Run Tests", func() {
@@ -126,7 +142,7 @@ func StartApplication() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("API Hygiene")
 
-	mainContent := buildMainContent()
+	mainContent := buildMainContent(selectedRequestMethod)
 	myWindow.SetContent(mainContent)
 	myWindow.Resize(fyne.NewSize(1000, 600))
 	myWindow.ShowAndRun()
